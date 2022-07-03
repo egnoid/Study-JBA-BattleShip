@@ -23,7 +23,7 @@ public class BattleShip {
                     coordinateTwo = new Coordinate(inputCoordinateTwo);
 
                 } catch (IllegalArgumentException e) {
-                    System.out.println(e);
+                    System.out.println(e.toString());
                     break;
                 }
 
@@ -31,14 +31,17 @@ public class BattleShip {
                     x.player1Positions.setShip(ship, coordinateOne, coordinateTwo);
                     shipInSea = true;
                 } catch (IllegalArgumentException e) {
-                    System.out.println(e);
+                    System.out.println(e.toString());
                 }
             }
-            if (shipName.equalsIgnoreCase(ShipCategory.DESTROYER.name())) {
-                System.out.println("The game starts!");
-            }
+            //if (shipName.equalsIgnoreCase(ShipCategory.DESTROYER.name())) {
+            //    System.out.println("The game starts!");
+            //}
             x.player1Positions.printGameField();
         }
+
+        System.out.println("The game starts!");
+        x.player1Positions.printGameField(true);
 
         Coordinate shotTarget = null;
         while (shotTarget == null) {
@@ -50,7 +53,7 @@ public class BattleShip {
             }
         }
         x.shot(shotTarget, x.player1Positions);
-
+        x.player1Positions.printGameField();
 
 
 
@@ -74,11 +77,11 @@ class Game {
     public void shot(Coordinate target, GameField playerPos) {
         if ("O".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])) {
             playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "X";
-            playerPos.printGameField();
+            playerPos.printGameField(true);
             System.out.println("You hit a ship!");
         } else {
             playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "M";
-            playerPos.printGameField();
+            playerPos.printGameField(true);
             System.out.println("You missed!");
         }
     };
@@ -111,7 +114,7 @@ class Coordinate {
     }
 
     Coordinate(int x, int y) throws IllegalArgumentException {
-        if (y > 0 || y <= GameField.fieldSize || x > 0 || x < GameField.fieldSize) {
+        if (y > 0 && y <= GameField.fieldSize && x > 0 && x < GameField.fieldSize) {
             rowCoordinate = y;
             lineCoordinate = x;
         } else {
@@ -268,6 +271,26 @@ class GameField {
         }
     }
 
+    public void printGameField(boolean fog) {
+        if (fog) {
+            for (int i = 0; i < fieldSize; i++) {
+                for (int j = 0; j < fieldSize; j++) {
+                    if ("O".equalsIgnoreCase(field[i][j])) {
+                        System.out.print("~");
+                    } else {
+                        System.out.print(field[i][j]);
+                    }
+                    if (j < fieldSize - 1) {
+                        System.out.print(" ");
+                    }
+                }
+                System.out.println();
+            }
+        } else printGameField();
+
+    }
+
+
 }
 
 enum ShipCategory {
@@ -278,7 +301,7 @@ enum ShipCategory {
     DESTROYER("Destroyer", 2);
 
     final String nameOfShipCategory;
-    int size;
+    final int size;
 
     ShipCategory(String name, int size) {
         this.nameOfShipCategory = name;
