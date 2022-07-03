@@ -34,8 +34,24 @@ public class BattleShip {
                     System.out.println(e);
                 }
             }
+            if (shipName.equalsIgnoreCase(ShipCategory.DESTROYER.name())) {
+                System.out.println("The game starts!");
+            }
             x.player1Positions.printGameField();
         }
+
+        Coordinate shotTarget = null;
+        while (shotTarget == null) {
+            try {
+                shotTarget = new Coordinate(scanner.next());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error! You entered the wrong coordinates! Try again:");
+                //break;
+            }
+        }
+        x.shot(shotTarget, x.player1Positions);
+
+
 
 
 
@@ -45,15 +61,27 @@ public class BattleShip {
 class Game {
 
     String status;
-    String ss;
+    String whoseTurn;
     GameField player1Positions;
 
     //Game x = new Game()
     public Game() {
         status = "Starting";
         player1Positions = new GameField();
+        whoseTurn = "Player1";
     }
 
+    public void shot(Coordinate target, GameField playerPos) {
+        if ("O".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])) {
+            playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "X";
+            playerPos.printGameField();
+            System.out.println("You hit a ship!");
+        } else {
+            playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "M";
+            playerPos.printGameField();
+            System.out.println("You missed!");
+        }
+    };
 }
 
 class Coordinate {
@@ -61,17 +89,24 @@ class Coordinate {
     private int lineCoordinate;
 
     Coordinate(String input) throws IllegalArgumentException {
+        lineCoordinate = -1;
         if (input.length() < 2 || input.length() > 3) {
             throw new IllegalArgumentException("Wrong format of input");
         } else {
             String letter = input.substring(0, 1).toUpperCase();
             rowCoordinate = Integer.parseInt(input.substring(1));
+            if (rowCoordinate < 1 || rowCoordinate > 10) {
+                throw new IllegalArgumentException("Error! You entered the wrong coordinates! Try again:");
+            }
             for (GameFieldLines line : GameFieldLines.values()) {
                 if (line.lineLetter.equalsIgnoreCase(letter)) {
                     lineCoordinate = line.lineNumber;
                     break;
                 }
             }
+        }
+        if (lineCoordinate == -1) {
+            throw new IllegalArgumentException("Error! You entered the wrong coordinates! Try again:");
         }
     }
 
