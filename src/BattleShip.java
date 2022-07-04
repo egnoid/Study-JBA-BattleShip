@@ -43,17 +43,21 @@ public class BattleShip {
         System.out.println("The game starts!");
         x.player1Positions.printGameField(true);
 
-        Coordinate shotTarget = null;
-        while (shotTarget == null) {
-            try {
-                shotTarget = new Coordinate(scanner.next());
-            } catch (IllegalArgumentException e) {
-                System.out.println("Error! You entered the wrong coordinates! Try again:");
-                //break;
+
+        while (x.status != GameStatuses.PLAYER1WIN) {
+            Coordinate shotTarget = null;
+            while (shotTarget == null) {
+                try {
+                    shotTarget = new Coordinate(scanner.next());
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error! You entered the wrong coordinates! Try again:");
+                }
             }
+            x.shot(shotTarget, x.player1Positions);
+            x.player1Positions.printGameField(true);
+            x.updateGameStatus();
         }
-        x.shot(shotTarget, x.player1Positions);
-        x.player1Positions.printGameField();
+
 
 
 
@@ -63,19 +67,20 @@ public class BattleShip {
 
 class Game {
 
-    String status;
+    GameStatuses status;
     String whoseTurn;
     GameField player1Positions;
 
     //Game x = new Game()
     public Game() {
-        status = "Starting";
+        status = GameStatuses.STARTING;
         player1Positions = new GameField();
         whoseTurn = "Player1";
     }
 
     public void shot(Coordinate target, GameField playerPos) {
-        if ("O".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])) {
+        if ("O".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])
+                || "X".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])) {
             playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "X";
             playerPos.printGameField(true);
             System.out.println("You hit a ship!");
@@ -85,6 +90,24 @@ class Game {
             System.out.println("You missed!");
         }
     };
+
+    public void updateGameStatus() {
+        int shipCellsUndamaged = 0;
+        for (int i = 1; i < player1Positions.field.length; i++) {
+            for (int j = 1; j < player1Positions.field[0].length; j++) {
+                if ("O".equalsIgnoreCase(player1Positions.field[i][j])) {
+                    shipCellsUndamaged++;
+                }
+            }
+        }
+        if (shipCellsUndamaged == 0) {
+            status = GameStatuses.PLAYER1WIN;
+            System.out.println("You sank the last ship. You won. Congratulations!");
+        } else {
+            status = GameStatuses.PLAYER1TURN;
+        }
+
+    }
 }
 
 class Coordinate {
@@ -318,5 +341,20 @@ enum GameFieldLines {
     GameFieldLines(String row, int num) {
         this.lineLetter = row;
         this.lineNumber = num;
+    }
+}
+
+enum GameStatuses {
+    STARTING("Starting"),
+    PLAYER1TURN("PLayer 1 turn"),
+    PLAYER2TURN("PLayer 2 turn"),
+    PLAYER1WIN("Player 1 win"),
+    PLAYER2WIN("Player 2 win"),
+    FINISHED("Finished");
+
+    final String statusName;
+
+    GameStatuses(String statusName) {
+        this.statusName = statusName;
     }
 }
