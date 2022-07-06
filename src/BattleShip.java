@@ -119,8 +119,7 @@ class Game {
 
     void passMoveToAnotherPlayer(Scanner s) {
         System.out.println("\nPress Enter and pass the move to another player");
-        try{System.in.read();}
-        catch(Exception e){}
+        s.nextLine();
 
     }
 
@@ -137,18 +136,12 @@ class Game {
 
 
             for (Ship ship: playerPos.ships) {
-System.out.println("Корабель" + ship.category + " содержит ");
-for (Coordinate c : ship.decks) {System.out.print("[" + c.getLineCoordinate() + "|" + c.getRowCoordinate() + "]");}
-System.out.println(" ][ зарегистрировано " + ship.decks.size() + "/" + ship.deckIsDestroyed.size() + " палуб" );
                 for (int i = 0; i < ship.decks.size(); i++) {
-System.out.println("Палуба, № " + i);
                     if (ship.decks.get(i).equals(target)) {
                         youDestroyShip = true;
-System.out.println("Совпадение цель-палуба №:" + i);
                         ship.deckIsDestroyed.set(i, true);
                         for (int j = 0; j < ship.deckIsDestroyed.size(); j++) {
                             youDestroyShip = youDestroyShip && ship.deckIsDestroyed.get(j);
-System.out.println("Палуба разбита " + ship.deckIsDestroyed.get(j));
                         }
                         break;
 
@@ -231,11 +224,7 @@ class Coordinate {
     }
 
     public boolean equals(Coordinate coordinate) {
-        if (this.rowCoordinate == coordinate.rowCoordinate && this.lineCoordinate == coordinate.lineCoordinate) {
-            return true;
-        } else {
-            return false;
-        }
+        return this.rowCoordinate == coordinate.rowCoordinate && this.lineCoordinate == coordinate.lineCoordinate;
     }
 }
 
@@ -275,7 +264,7 @@ class GameField {
                 field[i][j] = "~";
             }
         }
-        ships = new ArrayList<Ship>();
+        ships = new ArrayList<>();
     }
 
     public void setShip(ShipCategory ship, Coordinate coordinateOne, Coordinate coordinateTwo)
@@ -314,7 +303,7 @@ class GameField {
                     throw new IllegalArgumentException("Error! You placed it too close to another one. Try again:");
                 }
 
-            } else if (isDirectionV) {
+            } else {
                 rostrum = Math.max(coordinateOne.getLineCoordinate(), coordinateTwo.getLineCoordinate());
                 stern = Math.min(coordinateOne.getLineCoordinate(), coordinateTwo.getLineCoordinate());
 //There is repeated code == source of problems
@@ -352,8 +341,8 @@ class GameField {
                 s = b.getRowCoordinate(); f = a.getRowCoordinate();
             }
             for (int i = s; i <= f; i++) {
-                Coordinate addCoord = new Coordinate(a.getLineCoordinate(), i);
-                shipCollisionModel.add(addCoord);
+                Coordinate addCoordinate = new Coordinate(a.getLineCoordinate(), i);
+                shipCollisionModel.add(addCoordinate);
             }
         } else if (isDirectionV) {
             if (a.getLineCoordinate() < b.getLineCoordinate()) {
@@ -362,8 +351,8 @@ class GameField {
                 s = b.getLineCoordinate(); f = a.getLineCoordinate();
             }
             for (int i = s; i <= f; i++) {
-                Coordinate addCoord = new Coordinate(i, a.getRowCoordinate());
-                shipCollisionModel.add(addCoord);
+                Coordinate addCoordinate = new Coordinate(i, a.getRowCoordinate());
+                shipCollisionModel.add(addCoordinate);
             }
         }
 
@@ -383,9 +372,6 @@ class GameField {
                 }
             }
         }
-        // проитерировать shipCollisionModel, окружить каждую точку квадратом 3х3
-        // проверить есть ли в облаке значений поле со значением "O"
-        //это будет значить, что коллизия есть
 
         return collisionExist;
     }
