@@ -4,65 +4,54 @@ import java.util.Scanner;
 
 public class BattleShip {
     public static void main(String[] args) {
-        //System.out.println("Hello world!");
-        Game x = new Game();
-        x.player1Positions.printGameField();
+
         Scanner scanner = new Scanner(System.in);
-        for (ShipCategory ship : ShipCategory.values()) {
-            String shipName = ship.nameOfShipCategory;
-            int shipSize = ship.size;
-            boolean shipInSea = false;
-            while (!shipInSea) {
-                System.out.println("Enter the coordinates of the " + shipName + " (" + shipSize + " cells):");
-                String inputCoordinateOne = scanner.next();
-                String inputCoordinateTwo = scanner.next();
-                Coordinate coordinateOne;
-                Coordinate coordinateTwo;
-                try {
-                    coordinateOne = new Coordinate(inputCoordinateOne);
-                    coordinateTwo = new Coordinate(inputCoordinateTwo);
+        Game x = new Game();
+        x.setupShipsToGameField(x.player1Positions, scanner);
+        x.passMoveToAnotherPlayer(scanner);
+        x.setupShipsToGameField(x.player2Positions, scanner);
 
-                } catch (IllegalArgumentException e) {
-                    System.out.println(e.toString());
-                    break;
-                }
+//        System.out.println("The game starts!");
+        x.status = GameStatuses.PLAYER1TURN;
+        x.passMoveToAnotherPlayer(scanner);
 
-                try {
-                    x.player1Positions.setShip(ship, coordinateOne, coordinateTwo);
-                    shipInSea = true;
-                } catch (IllegalArgumentException e) {
-                    System.out.println(e.toString());
-                }
+        while (x.status != GameStatuses.PLAYER1WIN && x.status != GameStatuses.PLAYER2WIN) {
+            GameField player = x.status == GameStatuses.PLAYER1TURN ? x.player1Positions : x.player2Positions;
+            GameField enemy =  x.status == GameStatuses.PLAYER1TURN ? x.player2Positions : x.player1Positions;
+            enemy.printGameField(true);
+            System.out.println("---------------------");
+            player.printGameField();
+
+            if (x.status == GameStatuses.PLAYER1TURN) {
+                System.out.println("Player 1, it's your turn:");
+            } else {
+                System.out.println("Player 2, it's your turn:");
             }
-            //if (shipName.equalsIgnoreCase(ShipCategory.DESTROYER.name())) {
-            //    System.out.println("The game starts!");
-            //}
-            x.player1Positions.printGameField();
-        }
-
-        System.out.println("The game starts!");
-        x.player1Positions.printGameField(true);
 
 
-        while (x.status != GameStatuses.PLAYER1WIN) {
+            boolean successReadTargetCoordinate = false;
             Coordinate shotTarget = null;
-            while (shotTarget == null) {
+            while (!successReadTargetCoordinate) {
                 try {
+                    scanner.nextLine();
                     shotTarget = new Coordinate(scanner.next());
+                    successReadTargetCoordinate = true;
                 } catch (IllegalArgumentException e) {
                     System.out.println("Error! You entered the wrong coordinates! Try again:");
                 }
             }
-            x.shot(shotTarget, x.player1Positions);
-            x.player1Positions.printGameField(true);
+
+            x.shot(shotTarget, enemy);
+            System.out.println();
             x.updateGameStatus();
+            if (x.status != GameStatuses.PLAYER1WIN && x.status != GameStatuses.PLAYER2WIN) {
+                x.passMoveToAnotherPlayer(scanner);
+            }
         }
 
 
-
-
-
     }
+
 }
 
 class Game {
@@ -70,41 +59,129 @@ class Game {
     GameStatuses status;
     String whoseTurn;
     GameField player1Positions;
+    GameField player2Positions;
 
     //Game x = new Game()
     public Game() {
         status = GameStatuses.STARTING;
         player1Positions = new GameField();
+        player2Positions = new GameField();
         whoseTurn = "Player1";
+    }
+
+    void setupShipsToGameField(GameField player, Scanner scanner) {
+        String setupMessage;
+        if (player == player1Positions) {
+            setupMessage = "Player 1, place your ships on the game field";
+        } else {
+            setupMessage = "Player 2, place your ships to the game field";
+        }
+
+        System.out.println(setupMessage);
+        System.out.println();
+
+        player.printGameField();
+        System.out.println();
+        for (ShipCategory ship : ShipCategory.values()) {
+            String shipName = ship.nameOfShipCategory;
+            int shipSize = ship.size;
+            boolean shipInSea = false;
+            while (!shipInSea) {
+                System.out.println("Enter the coordinates of the " + shipName + " (" + shipSize + " cells):");
+
+                System.out.println();
+                String inputCoordinateOne = scanner.next();
+                String inputCoordinateTwo = scanner.next();
+                Coordinate coordinateOne;
+                Coordinate coordinateTwo;
+                System.out.println();
+                try {
+                    coordinateOne = new Coordinate(inputCoordinateOne);
+                    coordinateTwo = new Coordinate(inputCoordinateTwo);
+
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e);
+                    break;
+                }
+
+                try {
+                    player.setShip(ship, coordinateOne, coordinateTwo);
+                    shipInSea = true;
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e);
+                }
+            }
+
+            player.printGameField();
+            System.out.println();
+        }
+    }
+
+    void passMoveToAnotherPlayer(Scanner s) {
+        System.out.println("\nPress Enter and pass the move to another player");
+        try{System.in.read();}
+        catch(Exception e){}
+
     }
 
     public void shot(Coordinate target, GameField playerPos) {
         if ("O".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])
                 || "X".equalsIgnoreCase(playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()])) {
             playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "X";
-            playerPos.printGameField(true);
-            System.out.println("You hit a ship!");
+
+            boolean youDestroyShip = false;
+
+            for (Ship ship : playerPos.ships) {
+                System.out.print(ship.category + " =|= ");
+            } System.out.println();
+
+
+            for (Ship ship: playerPos.ships) {
+System.out.println("Корабель" + ship.category + " содержит ");
+for (Coordinate c : ship.decks) {System.out.print("[" + c.getLineCoordinate() + "|" + c.getRowCoordinate() + "]");}
+System.out.println(" ][ зарегистрировано " + ship.decks.size() + "/" + ship.deckIsDestroyed.size() + " палуб" );
+                for (int i = 0; i < ship.decks.size(); i++) {
+System.out.println("Палуба, № " + i);
+                    if (ship.decks.get(i).equals(target)) {
+                        youDestroyShip = true;
+System.out.println("Совпадение цель-палуба №:" + i);
+                        ship.deckIsDestroyed.set(i, true);
+                        for (int j = 0; j < ship.deckIsDestroyed.size(); j++) {
+                            youDestroyShip = youDestroyShip && ship.deckIsDestroyed.get(j);
+System.out.println("Палуба разбита " + ship.deckIsDestroyed.get(j));
+                        }
+                        break;
+
+                    }
+                    }
+                }
+            if (youDestroyShip) {
+                System.out.println("You sank a ship!");
+            } else {
+                System.out.println("You hit a ship!");
+            }
+
         } else {
             playerPos.field[target.getLineCoordinate()][target.getRowCoordinate()] = "M";
-            playerPos.printGameField(true);
             System.out.println("You missed!");
         }
-    };
+    }
 
     public void updateGameStatus() {
         int shipCellsUndamaged = 0;
-        for (int i = 1; i < player1Positions.field.length; i++) {
-            for (int j = 1; j < player1Positions.field[0].length; j++) {
-                if ("O".equalsIgnoreCase(player1Positions.field[i][j])) {
+        GameField player = status == GameStatuses.PLAYER1TURN ? player2Positions : player1Positions;
+        for (int i = 1; i < player.field.length; i++) {
+            for (int j = 1; j < player.field[0].length; j++) {
+                if ("O".equalsIgnoreCase(player.field[i][j])) {
                     shipCellsUndamaged++;
                 }
             }
         }
         if (shipCellsUndamaged == 0) {
-            status = GameStatuses.PLAYER1WIN;
+            status = status == GameStatuses.PLAYER1TURN ? GameStatuses.PLAYER1WIN : GameStatuses.PLAYER2WIN;
             System.out.println("You sank the last ship. You won. Congratulations!");
         } else {
-            status = GameStatuses.PLAYER1TURN;
+            status = status == GameStatuses.PLAYER1TURN ? GameStatuses.PLAYER2TURN : GameStatuses.PLAYER1TURN;
         }
 
     }
@@ -152,11 +229,32 @@ class Coordinate {
     public int getLineCoordinate() {
         return lineCoordinate;
     }
+
+    public boolean equals(Coordinate coordinate) {
+        if (this.rowCoordinate == coordinate.rowCoordinate && this.lineCoordinate == coordinate.lineCoordinate) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+class Ship {
+    public ArrayList<Coordinate> decks;
+    public ArrayList<Boolean> deckIsDestroyed;
+    public ShipCategory category;
+
+    Ship(ShipCategory shipCategory) {
+        category = shipCategory;
+        decks = new ArrayList<>();
+        deckIsDestroyed = new ArrayList<>();
+    }
 }
 
 class GameField {
     public static final int fieldSize = 11;
     public String[][] field;
+    public ArrayList<Ship> ships;
     public GameField() {
         field = new String[fieldSize][fieldSize];
         field[0][0] = " ";
@@ -177,6 +275,7 @@ class GameField {
                 field[i][j] = "~";
             }
         }
+        ships = new ArrayList<Ship>();
     }
 
     public void setShip(ShipCategory ship, Coordinate coordinateOne, Coordinate coordinateTwo)
@@ -202,9 +301,15 @@ class GameField {
 
                 //Ship Builder
                 if (!collisionCheck(field, coordinateOne, coordinateTwo, isDirectionH, isDirectionV)) {
+                    Ship newShip = new Ship(ship);
+
                     for (int i = stern; i <= rostrum; i++) {
                         field[coordinateOne.getLineCoordinate()][i] = "O";
+                        newShip.decks.add(new Coordinate(coordinateOne.getLineCoordinate(), i));
+                        newShip.deckIsDestroyed.add(false);
                     }
+                    ships.add(newShip);
+
                 } else {
                     throw new IllegalArgumentException("Error! You placed it too close to another one. Try again:");
                 }
@@ -212,12 +317,19 @@ class GameField {
             } else if (isDirectionV) {
                 rostrum = Math.max(coordinateOne.getLineCoordinate(), coordinateTwo.getLineCoordinate());
                 stern = Math.min(coordinateOne.getLineCoordinate(), coordinateTwo.getLineCoordinate());
-
+//There is repeated code == source of problems
+//Please apply DRY design principle
                 //Ship Builder
                 if (!collisionCheck(field, coordinateOne, coordinateTwo, isDirectionH, isDirectionV)) {
+                    Ship newShip = new Ship(ship);
+
                     for (int i = stern; i <= rostrum; i++) {
                             field[i][coordinateOne.getRowCoordinate()] = "O";
+                            newShip.decks.add(new Coordinate(i, coordinateOne.getRowCoordinate()));
+                            newShip.deckIsDestroyed.add(false);
                     }
+                    ships.add(newShip);
+
                 } else {
                     throw new IllegalArgumentException("Error! You placed it too close to another one. Try again:");
                 }
@@ -278,9 +390,6 @@ class GameField {
         return collisionExist;
     }
 
-    public void makeTurn() {
-
-    }
 
     public void printGameField() {
         for (int i = 0; i < fieldSize; i++) {
@@ -349,8 +458,7 @@ enum GameStatuses {
     PLAYER1TURN("PLayer 1 turn"),
     PLAYER2TURN("PLayer 2 turn"),
     PLAYER1WIN("Player 1 win"),
-    PLAYER2WIN("Player 2 win"),
-    FINISHED("Finished");
+    PLAYER2WIN("Player 2 win");
 
     final String statusName;
 
